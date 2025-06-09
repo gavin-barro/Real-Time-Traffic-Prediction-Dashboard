@@ -1,1 +1,1 @@
-# Real-Time-Traffic-Prediction-Dashboard
+# Real Time Traffic Prediction Dashboard
