@@ -1,0 +1,9 @@
+streamlit
+pandas
+scikit-learn
+numpy
+plotly
+requests
+osmnx
+networkx
+joblib
