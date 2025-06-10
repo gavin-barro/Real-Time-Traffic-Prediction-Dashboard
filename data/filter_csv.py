@@ -14,7 +14,7 @@ TRAFFIC_APP_TOKEN = os.getenv("TRAFFIC_APP_TOKEN")
 client = Socrata(data_url, TRAFFIC_APP_TOKEN, timeout=150)
 
 # Define the output directory and file
-output_dir = os.path.join('data', 'raw')
+output_dir = os.path.join('data', 'processed')
 if not os.path.exists(output_dir):
     os.makedirs(output_dir)
 output_csv = os.path.join(output_dir, 'traffic_volume_2021_plus.csv')
@@ -24,7 +24,7 @@ where_clause = "yr >= '2021'"
 
 # Define batch size and file size target
 batch_size = 5000  # Number of rows per batch, adjust based on memory
-max_file_size_mb = 90  # Target < 100 MB for GitHub
+max_file_size_mb = 90  # Target < 100 MB
 total_size_mb = 0
 offset = 0
 keep_going = True

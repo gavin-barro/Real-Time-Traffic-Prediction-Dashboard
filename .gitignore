@@ -2,3 +2,4 @@
 info.txt
 steps.txt
 .DS_Store
+data/raw/raw_nyc_traffic_data.csv
