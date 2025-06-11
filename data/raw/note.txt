@@ -1,9 +1,7 @@
-This folder contains the csv: "raw_nyc_traffic_data.csv
+This folder contains the initial csv file from the cityofnewyork.us that was renamed to: "raw_nyc_traffic_data.csv
 
 The files is 200+mb, too large for Github to store. The raw data can be found both in the README and here: 
-
-
-https://data.cityofnewyork.us/Transportation/Automated-Traffic-Volume-Counts/7ym2-wayt/about_data
+- https://data.cityofnewyork.us/Transportation/Automated-Traffic-Volume-Counts/7ym2-wayt/about_data
 
 To access this data, simply hit export on the above page.
 
