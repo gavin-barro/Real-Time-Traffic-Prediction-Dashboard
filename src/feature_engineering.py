@@ -25,6 +25,7 @@
 
 import pandas as pd
 import requests
+import os
 from dateutil.relativedelta import relativedelta, MO, TH
 from dateutil.easter import easter
 from datetime import datetime
@@ -86,6 +87,7 @@ fixed_holidays_mmdd = {
     '07-04': ('Independence Day', 'Federal'),
     '10-31': ('Halloween', 'Cultural'),
     '11-11': ('Veterans Day', 'Federal'),
+    '12-24': ('Christmas Eve', 'Religious'),
     '12-25': ('Christmas Day', 'Religious'),
 }
 
@@ -131,8 +133,16 @@ print(f"Updated CSV saved to: {output_path}")
 
 """ Adding Weather to the output. """
 
+borough_locations = {
+    'Manhattan': 'Manhattan, NY',
+    'Brooklyn': 'Brooklyn, NY',
+    'Queens': 'Queens, NY',
+    'Bronx': 'The Bronx, NY',
+    'Staten_Island': 'Staten Island, NY'
+}
 
+START_DATE= '2018-01-16'
+END_DATE = '2024-06-10'
+WEATHER_API_KEY = os.getenv("WEATHER_API_KEY")
 
-
-
-
+url = f"https://weather.visualcrossing.com/VisualCrossingWebServices/rest/services/timeline/{LOCATION}/{START_DATE}/{END_DATE}"
