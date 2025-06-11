@@ -62,8 +62,8 @@ wmo_weather_codes = {
 start_date = '2018-01-01'
 end_date = '2024-12-31'
 
-# Ensure output directory exists
-output_dir = os.path.join("data", "processed")
+# Ensure weather CSV output directory exists
+output_dir = os.path.join("data", "processed", "weather_csvs")
 os.makedirs(output_dir, exist_ok=True)
 
 # Loop through each borough and fetch weather data
@@ -101,12 +101,12 @@ for boro, coords in borough_coords.items():
         print(f"Failed to fetch weather data for {boro}. Status code: {response.status_code}")
 
 
-# === Load Traffic Data ===
+# Load Traffic Data 
 traffic_path = 'data/processed/traffic_volume_2018_plus_feature_engineered.csv'
 traffic_df = pd.read_csv(traffic_path)
 
-# === Load & Concatenate Weather Data ===
-weather_dir = 'data/processed'
+# Load & Concatenate Weather Data
+weather_dir = 'data/processed/weather_csvs'
 weather_files = [f for f in os.listdir(weather_dir) if f.startswith("weather_") and f.endswith(".csv")]
 
 weather_dfs = []
@@ -116,12 +116,12 @@ for file in weather_files:
 
 weather_df = pd.concat(weather_dfs, ignore_index=True)
 
-# === Standardize columns for merge ===
+# Standardize columns for merge
 # Make sure boro and borough columns match case and formatting
 traffic_df['boro'] = traffic_df['boro'].str.title().str.strip()
 weather_df['borough'] = weather_df['borough'].str.title().str.strip()
 
-# === Merge on boro + datetime keys ===
+# Merge on boro + datetime keys
 merge_keys = ['boro', 'year', 'month', 'day', 'hour']
 
 merged_df = pd.merge(
