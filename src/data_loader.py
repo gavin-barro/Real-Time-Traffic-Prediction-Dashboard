@@ -1,66 +1,82 @@
 # Module to load and preprocess data
 
+from dotenv import load_dotenv
+from sodapy import Socrata
+import os
 import pandas as pd
 
-# Load the CSV
-df = pd.read_csv('data/processed/traffic_volume_2018_plus.csv')
+load_dotenv()
 
-# Standardize column names (handle both cases)
-df.rename(columns=lambda col: col.lower(), inplace=True)
-df.rename(columns={'yr': 'year', 'm': 'month', 'd': 'day', 'hh': 'hour', 'mm': 'minute'}, inplace=True)
+# Set up the Socrata client
+data_url = 'data.cityofnewyork.us'  # NYC Open Data domain
+data_set = '7ym2-wayt'  # Dataset ID for Automated Traffic Volume Counts
+TRAFFIC_APP_TOKEN = os.getenv("TRAFFIC_APP_TOKEN")
 
-# Create timestamp
-df['timestamp'] = pd.to_datetime(df[['year', 'month', 'day', 'hour', 'minute']])
+# Initialize the Socrata client (timeout set to 150 seconds for large queries)
+client = Socrata(data_url, TRAFFIC_APP_TOKEN, timeout=150)
 
-# === TIME FEATURES ===
-df['hour'] = df['timestamp'].dt.hour  # Ensure consistent hour
-df['dayofweek'] = df['timestamp'].dt.day_name()  # 'Monday', 'Tuesday', etc.
-df['is_weekend'] = df['dayofweek'].isin(['Saturday', 'Sunday']).astype(int)
-df['is_rush_hour'] = df['hour'].isin([7, 8, 9, 16, 17, 18]).astype(int)
+# Define the output directory and file
+output_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'data', 'processed'))
+if not os.path.exists(output_dir):
+    os.makedirs(output_dir)
+output_csv = os.path.join(output_dir, 'traffic_volume_2018_plus.csv')
 
-# === HOLIDAY FEATURES ===
-# List of holidays (2025)
-holidays_2025 = {
-    '2025-01-01': {'name': "New Year's Day", 'type': 'Federal'},
-    '2025-01-20': {'name': "Martin Luther King Jr. Day", 'type': 'Federal'},
-    '2025-02-17': {'name': "Presidents' Day", 'type': 'Federal'},
-    '2025-03-31': {'name': 'Eid al-Fitr', 'type': 'Religious'},
-    '2025-04-20': {'name': 'Easter Sunday', 'type': 'Religious'},
-    '2025-05-26': {'name': 'Memorial Day', 'type': 'Federal'},
-    '2025-06-08': {'name': 'Puerto Rican Day Parade', 'type': 'Local'},
-    '2025-06-19': {'name': 'Juneteenth', 'type': 'Federal'},
-    '2025-07-04': {'name': 'Independence Day', 'type': 'Federal'},
-    '2025-09-01': {'name': 'Labor Day', 'type': 'Federal'},
-    '2025-10-13': {'name': 'Columbus Day', 'type': 'Federal'},
-    '2025-11-02': {'name': 'NYC Marathon', 'type': 'Local'},
-    '2025-11-11': {'name': 'Veterans Day', 'type': 'Federal'},
-    '2025-11-27': {'name': 'Thanksgiving', 'type': 'Federal'},
-    '2025-12-15': {'name': 'Hanukkah', 'type': 'Religious'},
-    '2025-12-25': {'name': 'Christmas Day', 'type': 'Federal'}
-}
+# Filter for data from 2018 onward
+where_clause = "yr >= '2018'"
 
-holiday_dates = set(holidays_2025.keys())
-holiday_type_map = {k: v['type'] for k, v in holidays_2025.items()}
+# Define batch size and file size target
+batch_size = 5000  # Number of rows per batch, adjust based on memory
+max_file_size_mb = 95  # Target < 100 MB
+total_size_mb = 0
+offset = 0
+keep_going = True
+all_data = []  # List to store all batches
 
-# Add holiday columns
-df['date_str'] = df['timestamp'].dt.date.astype(str)
-df['is_holiday'] = df['date_str'].isin(holiday_dates).astype(int)
-df['holiday_type'] = df['date_str'].map(holiday_type_map).fillna('None')
+try:
+    # Loop to fetch data in batches
+    while keep_going:
+        try:
+            # Fetch a batch of data, filtered for 2021 and later
+            results = client.get(data_set, limit=batch_size, offset=offset, where=where_clause)
+            
+            # Stop if no more records are returned
+            if not results:
+                print("No more data to fetch.")
+                break
+            
+            # Convert batch to Pandas DataFrame and append to list
+            df = pd.DataFrame.from_records(results)
+            all_data.append(df)
+            print(f"Fetched batch of {len(df)} rows, offset: {offset}")
+            
+            # Increment offset for next batch
+            offset += batch_size
+            
+        except Exception as e:
+            print(f"Error in batch fetch: {e}")
+            keep_going = False
 
-# Define multi-day holiday periods (e.g., travel weekends)
-holiday_periods = [
-    ('2025-05-24', '2025-05-26'),  # Memorial Day weekend
-    ('2025-11-26', '2025-11-30'),  # Thanksgiving weekend
-    ('2025-12-21', '2026-01-01'),  # Christmas/New Year period
-]
-df['is_holiday_period'] = 0
-for start, end in holiday_periods:
-    df.loc[df['date_str'].between(start, end), 'is_holiday_period'] = 1
+    # Combine all batches into one DataFrame
+    if all_data:
+        combined_df = pd.concat(all_data, ignore_index=True)
+        
+        # Save to a single CSV file
+        combined_df.to_csv(output_csv, index=False)
+        file_size_mb = os.path.getsize(output_csv) / (1024 * 1024)  # Convert bytes to MB
+        total_size_mb = file_size_mb
+        print(f"Data saved to {output_csv}, size: {file_size_mb:.2f} MB")
+        
+        # Check if file size is under GitHub limit
+        if total_size_mb >= max_file_size_mb:
+            print(f"Warning: File size ({total_size_mb:.2f} MB) is close to or exceeds 90 MB. Consider filtering data further.")
+    else:
+        print("No data fetched to save.")
 
-# Drop temporary column
-df.drop(columns=['date_str'], inplace=True)
+except Exception as e:
+    print(f"Error connecting to Socrata API: {e}")
 
-# Save updated file
-output_path = 'data/processed/traffic_volume_with_features.csv'
-df.to_csv(output_path, index=False)
-print(f"Updated file saved: {output_path}")
+finally:
+    # Close the Socrata client
+    client.close()
+
+print(f"Download complete. Total size: {total_size_mb:.2f} MB")
