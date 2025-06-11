@@ -24,8 +24,14 @@
 """
 
 import pandas as pd
+import requests
 from dateutil.relativedelta import relativedelta, MO, TH
 from dateutil.easter import easter
+from datetime import datetime
+from dotenv import load_dotenv
+
+load_dotenv()
+
 
 # Movable holidays
 def get_movable_holidays(year: int) -> dict:
@@ -119,3 +125,14 @@ df.drop(columns=['date'], inplace=True)
 output_path = 'data/processed/traffic_volume_2018_plus_feature_engineered.csv'
 df.to_csv(output_path, index=False)
 print(f"Updated CSV saved to: {output_path}")
+
+
+
+
+""" Adding Weather to the output. """
+
+
+
+
+
+
