@@ -129,20 +129,4 @@ df.to_csv(output_path, index=False)
 print(f"Updated CSV saved to: {output_path}")
 
 
-
-
 """ Adding Weather to the output. """
-
-borough_locations = {
-    'Manhattan': 'Manhattan, NY',
-    'Brooklyn': 'Brooklyn, NY',
-    'Queens': 'Queens, NY',
-    'Bronx': 'The Bronx, NY',
-    'Staten_Island': 'Staten Island, NY'
-}
-
-START_DATE= '2018-01-16'
-END_DATE = '2024-06-10'
-WEATHER_API_KEY = os.getenv("WEATHER_API_KEY")
-
-url = f"https://weather.visualcrossing.com/VisualCrossingWebServices/rest/services/timeline/{LOCATION}/{START_DATE}/{END_DATE}"
