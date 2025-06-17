@@ -6,7 +6,7 @@ from sklearn.ensemble import RandomForestRegressor
 from sklearn.compose import ColumnTransformer
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder
-from src.model_utils import evaluate_model, show_plots, save_model
+from ..src.model_utils import evaluate_model, show_plots, save_model
 
 # Load & prepare data
 df = pd.read_csv("data/processed/final_training_data.csv", dtype={19: str, 20: str}, low_memory=False)
