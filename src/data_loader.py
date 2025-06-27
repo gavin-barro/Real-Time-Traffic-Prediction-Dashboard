@@ -38,20 +38,20 @@ try:
         try:
             # Fetch a batch of data, filtered for 2021 and later
             results = client.get(data_set, limit=batch_size, offset=offset, where=where_clause)
-            
+
             # Stop if no more records are returned
             if not results:
                 print("No more data to fetch.")
                 break
-            
+
             # Convert batch to Pandas DataFrame and append to list
             df = pd.DataFrame.from_records(results)
             all_data.append(df)
             print(f"Fetched batch of {len(df)} rows, offset: {offset}")
-            
+
             # Increment offset for next batch
             offset += batch_size
-            
+
         except Exception as e:
             print(f"Error in batch fetch: {e}")
             keep_going = False
@@ -59,13 +59,13 @@ try:
     # Combine all batches into one DataFrame
     if all_data:
         combined_df = pd.concat(all_data, ignore_index=True)
-        
+
         # Save to a single CSV file
         combined_df.to_csv(output_csv, index=False)
         file_size_mb = os.path.getsize(output_csv) / (1024 * 1024)  # Convert bytes to MB
         total_size_mb = file_size_mb
         print(f"Data saved to {output_csv}, size: {file_size_mb:.2f} MB")
-        
+
         # Check if file size is under GitHub limit
         if total_size_mb >= max_file_size_mb:
             print(f"Warning: File size ({total_size_mb:.2f} MB) is close to or exceeds 90 MB. Consider filtering data further.")
